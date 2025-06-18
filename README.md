@@ -1,7 +1,5 @@
 # CellFormer: Transformer-based Cellular Population Structure Analysis
 
-![Project Logo](https://via.placeholder.com/150)  
-
 **Automatic modeling of cell population structures in histopathology images using hierarchical Transformer architectures**
 
 ## 📖 Overview
@@ -24,6 +22,7 @@ CellFormer introduces a novel framework for analyzing dense cellular images (e.g
 git clone https://github.com/YankongSJTU/cellformer.git
 cd cellformer
 conda env create -f environment.yml
+```
 
 ## 🛠 Project Structure
 
