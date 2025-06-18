@@ -25,7 +25,7 @@ conda env create -f environment.yml
 ```
 
 ## 🛠 Project Structure
-text
+```bash
 cellformer/
 ├── Cellformer.py               - Main pipeline for CPS feature prediction
 ├── models.py                   - Core model architectures
@@ -36,13 +36,15 @@ cellformer/
 │
 ├── data/                       - Demo data (with download link)
 └── checkpoints/                - saved weights
-
+```
 
 ## 🚀 Quick Start
 1. Data Preparation
+python
 python CreatDataset.py --mode test --datadir DATA_PATH --image_dir IMAGE_FILE_PATH --nuc_seg_dir NUCLEI_SEGMENT_PATH --basenamelen LENGTH_FOR_BASENAME_of_IAMGES
 
-2. Extract CPS Features
+3. Extract CPS Features
+python
 python Cellformer.py --testdatadir TESTDATA_PATH --gpu_ids GPU_IDs
 
 ## 🏆 Benchmark Results
