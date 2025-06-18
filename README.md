@@ -40,18 +40,20 @@ cellformer/
 
 ## 🚀 Quick Start
 1. Data Preparation
-python
+```python
 python CreatDataset.py --mode test --datadir DATA_PATH --image_dir IMAGE_FILE_PATH --nuc_seg_dir NUCLEI_SEGMENT_PATH --basenamelen LENGTH_FOR_BASENAME_of_IAMGES
-
+```
 3. Extract CPS Features
-python
+```python
 python Cellformer.py --testdatadir TESTDATA_PATH --gpu_ids GPU_IDs
-
+```
 ## 🏆 Benchmark Results
-Task	TCGA Cancer Type	AUROC
-Tumor Classification	BRCA	0.92
-Survival Prediction	LUAD	0.81
-Drug Response (PD-1)	SKCM	0.76
+
+-Task	TCGA Cancer Type	AUROC
+-Tumor Classification	BRCA	0.92
+-Survival Prediction	LUAD	0.81
+-Drug Response (PD-1)	SKCM	0.76
+
 
 ## 📜 Citation
 If you use CellFormer in your research, please cite:
