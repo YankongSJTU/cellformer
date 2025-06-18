@@ -1,6 +1,6 @@
 CellFormer: Transformer-based Cellular Population Structure Analysis
 
-https://via.placeholder.com/150 (如果有logo可以添加)
+https://via.placeholder.com/150  
 
 Automatic modeling of cell population structures in histopathology images using hierarchical Transformer architectures
 📖 Overview
@@ -21,11 +21,10 @@ Key capabilities:
 🛠 Installation
 bash
 
-git clone https://github.com/yourusername/cellformer.git
+git clone https://github.com/YankongSJTU/cellformer.git
 cd cellformer
-conda env create -f environment.yml  # 建议提供环境文件
-pip install -r requirements.txt
-
+conda env create -f environment.yml   
+ 
 🗂 Project Structure
 text
 
@@ -35,50 +34,30 @@ cellformer/
 ├── CreateDatasets.py           - H&E image preprocessing and dataset construction
 │
 ├── utils/
-│   ├── graph_ops.py            - Graph construction (Delaunay/GAT operations)
-│   ├── contrastive_learning.py - SimCLR implementation
-│   ├── spatial_utils.py        - Nuclei expansion & patch extraction
-│   └── visualization.py        - CPS feature visualization tools
+│   ├── utils.py                - Useful functions
+│   └── Datasets.py             - Datasets modules
 │
-├── data/                       - Example data (建议添加样本数据)
-└── outputs/                    - Generated predictions/features
+├── data/                       - Demo data (with download link)
+└── checkpoints/                - saved weights
+
 
 🚀 Quick Start
 1. Data Preparation
 python
 
-from CreateDatasets import HEDataGenerator
+python CreatDataset.py --mode test --datadir DATA_PATH --image_dir IMAGE_FILE_PATH --nuc_seg_dir NUCLEI_SEGMENT_PATH --basenamelen LENGTH_FOR_BASENAME_of_IAMGES
 
-datagen = HEDataGenerator(
-    slide_dir='path/to/slides',
-    mask_dir='path/to/nuclei_masks',
-    patch_size=256,
-    expansion_radius=8  # pixels around each nucleus
-)
-dataset = datagen.build_graph_dataset()
-
-2. Train CellFormer
+2. Extract CPS Features
 python
 
-from Cellformer import CellFormerPipeline
-
-pipeline = CellFormerPipeline(
-    gat_dims=[512, 256], 
-    transformer_heads=8,
-    temperature=0.07  # contrastive loss
-)
-pipeline.train(dataset, epochs=100, lr=1e-4)
-
-3. Extract CPS Features
-python
-
-cps_features = pipeline.extract_features(dataset)
+python Cellformer.py --testdatadir TESTDATA_PATH --gpu_ids GPU_IDs
 
 🏆 Benchmark Results
 Task	TCGA Cancer Type	AUROC
 Tumor Classification	BRCA	0.92
 Survival Prediction	LUAD	0.81
 Drug Response (PD-1)	SKCM	0.76
+
 📜 Citation
 
 If you use CellFormer in your research, please cite:
@@ -88,19 +67,13 @@ bibtex
   title={CellFormer: Hierarchical Modeling of Cellular Populations via Graph-Enhanced Transformers},
   author={Your Name et al.},
   journal={arXiv},
-  year={2023}
+  year={2025}
 }
 
 🤝 Contributing
 
-We welcome contributions! Please open an Issue or Pull Request for:
-
-    New graph connectivity models
-
-    Additional contrastive learning strategies
-
-    Multi-modal integration extensions
+We welcome contributions!   If you are interested in contributing to the construction of population features, the improvement of the contrastive learning module, the enhancement of the GAT (Graph Attention Network) module, or any other related areas, please feel free to contact me.
 
 📧 Contact
 
-For questions, contact: your.email@institution.edu
+For questions, contact: kongyan@sjtu.edu.cn
