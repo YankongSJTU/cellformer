@@ -1,0 +1,5 @@
+The download link for the large image dataset:
+
+https://drive.google.com/file/d/1yrrOi8X_ciBxzl4OLI0jrKIoEdcI1Hj4/view?usp=drive_link
+
+Please decompress the file and ensure that all images are stored directly in this folder.
