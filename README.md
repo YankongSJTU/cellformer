@@ -61,7 +61,7 @@ If you use CellFormer in your research, please cite:
 ```bibtex
 @article{cellformer2023,
   title={CellFormer: Hierarchical Modeling of Cellular Populations via Graph-Enhanced Transformers},
-  author={Your Name et al.},
+  author={Yan Kong et al.},
   journal={arXiv},
   year={2025}
 }
