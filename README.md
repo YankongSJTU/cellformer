@@ -49,10 +49,11 @@ python Cellformer.py --testdatadir TESTDATA_PATH --gpu_ids GPU_IDs
 ```
 ## 🏆 Benchmark Results
 
--Task	TCGA Cancer Type	AUROC
--Tumor Classification	BRCA	0.92
--Survival Prediction	LUAD	0.81
--Drug Response (PD-1)	SKCM	0.76
+| Task                  | TCGA Cancer Type | AUROC |
+|-----------------------|------------------|-------|
+| Tumor Classification  | BRCA             | 0.92  |
+| Survival Prediction   | LUAD             | 0.81  |
+| Drug Response (PD-1)  | SKCM             | 0.76  |
 
 
 ## 📜 Citation
