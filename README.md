@@ -25,7 +25,7 @@ git clone https://github.com/YankongSJTU/cellformer.git
 cd cellformer
 conda env create -f environment.yml
  
-🗂 Project Structure
+## 🗂 Project Structure
 
 cellformer/
 ├── Cellformer.py               - Main pipeline for CPS feature prediction
@@ -38,7 +38,8 @@ cellformer/
 │
 ├── data/                       - Demo data (with download link)
 └── checkpoints/                - saved weights
-🚀 Quick Start
+
+##🚀 Quick Start
 1. Data Preparation
 python
 
@@ -49,16 +50,14 @@ python
 
 python Cellformer.py --testdatadir TESTDATA_PATH --gpu_ids GPU_IDs
 
-🏆 Benchmark Results
+## 🏆 Benchmark Results
 Task	TCGA Cancer Type	AUROC
 Tumor Classification	BRCA	0.92
 Survival Prediction	LUAD	0.81
 Drug Response (PD-1)	SKCM	0.76
-📜 Citation
-
+## 📜 Citation
 If you use CellFormer in your research, please cite:
 bibtex
-
 @article{cellformer2023,
   title={CellFormer: Hierarchical Modeling of Cellular Populations via Graph-Enhanced Transformers},
   author={Your Name et al.},
@@ -66,8 +65,7 @@ bibtex
   year={2025}
 }
 
-🤝 Contributing
-
+##🤝 Contributing
 We welcome contributions! If you are interested in contributing to:
 
     The construction of population features
@@ -79,10 +77,9 @@ We welcome contributions! If you are interested in contributing to:
     Or any other related areas
 
 Please feel free to contact me.
-📧 Contact
+## 📧 Contact
 
 For questions, contact: kongyan@sjtu.edu.cn
-text
 
 
 Key formatting improvements made:
