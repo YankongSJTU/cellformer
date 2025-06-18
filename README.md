@@ -25,7 +25,7 @@ git clone https://github.com/YankongSJTU/cellformer.git
 cd cellformer
 conda env create -f environment.yml
  
-## 🗂 Project Structure
+## 🛠 Project Structure
 
 cellformer/
 ├── Cellformer.py               - Main pipeline for CPS feature prediction
@@ -39,7 +39,7 @@ cellformer/
 ├── data/                       - Demo data (with download link)
 └── checkpoints/                - saved weights
 
-##🚀 Quick Start
+## 🚀 Quick Start
 1. Data Preparation
 python
 
