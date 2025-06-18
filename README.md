@@ -24,7 +24,7 @@ CellFormer introduces a novel framework for analyzing dense cellular images (e.g
 git clone https://github.com/YankongSJTU/cellformer.git
 cd cellformer
 conda env create -f environment.yml
- 
+
 ## 🛠 Project Structure
 
 cellformer/
@@ -38,6 +38,7 @@ cellformer/
 │
 ├── data/                       - Demo data (with download link)
 └── checkpoints/                - saved weights
+
 
 ## 🚀 Quick Start
 1. Data Preparation
