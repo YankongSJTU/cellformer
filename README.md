@@ -57,14 +57,14 @@ python Cellformer.py --testdatadir TESTDATA_PATH --gpu_ids GPU_IDs
 
 ## 📜 Citation
 If you use CellFormer in your research, please cite:
-bibtex
+```bibtex
 @article{cellformer2023,
   title={CellFormer: Hierarchical Modeling of Cellular Populations via Graph-Enhanced Transformers},
   author={Your Name et al.},
   journal={arXiv},
   year={2025}
 }
-
+```
 ## 🤝 Contributing
 We welcome contributions! If you are interested in contributing to:
     The construction of population features
