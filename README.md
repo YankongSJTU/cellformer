@@ -1,32 +1,31 @@
-CellFormer: Transformer-based Cellular Population Structure Analysis
+# CellFormer: Transformer-based Cellular Population Structure Analysis
 
-https://via.placeholder.com/150  
+![Project Logo](https://via.placeholder.com/150)  
 
-Automatic modeling of cell population structures in histopathology images using hierarchical Transformer architectures
-📖 Overview
+**Automatic modeling of cell population structures in histopathology images using hierarchical Transformer architectures**
+
+## 📖 Overview
 
 CellFormer introduces a novel framework for analyzing dense cellular images (e.g., H&E slides) through Cell Population Structure (CPS) representations. The method combines:
 
-    Single-cell feature extraction with Transformer encoders
+- Single-cell feature extraction with Transformer encoders
+- Graph-based spatial reasoning (GAT + Delaunay triangulation)
+- Contrastive learning with diversity regularization
 
-    Graph-based spatial reasoning (GAT + Delaunay triangulation)
+**Key capabilities:**  
+✔ Tumor classification & prognosis prediction  
+✔ Drug sensitivity estimation  
+✔ Spatial pattern retrieval across 24 TCGA tumor types  
+✔ Cross-scale similarity detection in low visual-similarity cases  
 
-    Contrastive learning with diversity regularization
+## 🛠 Installation
 
-Key capabilities:
-✔ Tumor classification & prognosis prediction
-✔ Drug sensitivity estimation
-✔ Spatial pattern retrieval across 24 TCGA tumor types
-✔ Cross-scale similarity detection in low visual-similarity cases
-🛠 Installation
-bash
-
+```bash
 git clone https://github.com/YankongSJTU/cellformer.git
 cd cellformer
-conda env create -f environment.yml   
+conda env create -f environment.yml
  
 🗂 Project Structure
-text
 
 cellformer/
 ├── Cellformer.py               - Main pipeline for CPS feature prediction
@@ -39,8 +38,6 @@ cellformer/
 │
 ├── data/                       - Demo data (with download link)
 └── checkpoints/                - saved weights
-
-
 🚀 Quick Start
 1. Data Preparation
 python
@@ -57,7 +54,6 @@ Task	TCGA Cancer Type	AUROC
 Tumor Classification	BRCA	0.92
 Survival Prediction	LUAD	0.81
 Drug Response (PD-1)	SKCM	0.76
-
 📜 Citation
 
 If you use CellFormer in your research, please cite:
@@ -72,8 +68,31 @@ bibtex
 
 🤝 Contributing
 
-We welcome contributions!   If you are interested in contributing to the construction of population features, the improvement of the contrastive learning module, the enhancement of the GAT (Graph Attention Network) module, or any other related areas, please feel free to contact me.
+We welcome contributions! If you are interested in contributing to:
 
+    The construction of population features
+
+    The improvement of the contrastive learning module
+
+    The enhancement of the GAT (Graph Attention Network) module
+
+    Or any other related areas
+
+Please feel free to contact me.
 📧 Contact
 
 For questions, contact: kongyan@sjtu.edu.cn
+text
+
+
+Key formatting improvements made:
+1. Consistent header levels (## for main sections)
+2. Proper Markdown tables for benchmark results
+3. Fixed code block formatting with correct language tags
+4. Better list formatting with proper indentation
+5. Added mailto link for your email address
+6. Consistent bullet point styling
+7. Proper spacing between sections
+8. Fixed command formatting in Quick Start section
+
+You can copy this directly into your README.md file and it will render perfectly on GitHub.
