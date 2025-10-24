@@ -4,7 +4,7 @@
 
 ## 📖 Overview
 
-CellFormer introduces a novel framework for analyzing dense cellular images (e.g., H&E slides) through Cell Population Structure (CPS) representations. The method combines:
+CPSFormer introduces a novel framework for analyzing dense cellular images (e.g., H&E slides) through Cell Population Structure (CPS) representations. The method combines:
 
 - Single-cell feature extraction with Transformer encoders
 - Graph-based spatial reasoning (GAT + Delaunay triangulation)
@@ -45,7 +45,7 @@ python CreatDataset.py --mode test --datadir DATA_PATH --image_dir IMAGE_FILE_PA
 ```
 3. Extract CPS Features
 ```python
-python Cellformer.py --testdatadir TESTDATA_PATH --gpu_ids GPU_IDs
+python CPSFormer.py --testdatadir TESTDATA_PATH --gpu_ids GPU_IDs
 ```
 ## 🏆 Benchmark Results
 
