@@ -1,4 +1,4 @@
-# CellFormer: Transformer-based Cellular Population Structure Analysis
+# CPSFormer: Cell Population Structure Representations via Transformer 
 
 **Automatic modeling of cell population structures in histopathology images using hierarchical Transformer architectures**
 
