@@ -242,16 +242,6 @@ Total Loss = (1-α-γ) × L_contrastive + γ × L_diverse + α × L_instance + �
 
 ## Downstream Performance
 
-### Mutation Prediction (TCGA 22 Cohorts)
-
-| Method | Cohort-Gene Pairs | Mean AUC |
-|--------|-------------------|----------|
-| Mean Pooling + SVM | 239 | 0.5087 |
-| Top-K Pooling + SVM | 234 | 0.5111 |
-| Attention-based NN | 239 | **0.5813** |
-
-Top performing pairs: BLCA TP53 (AUC=0.61), LUAD TP53 (AUC=0.60)
-
 ### Survival Analysis (Cox Regression)
 
 | Cohort | N Patients | C-index |
@@ -263,15 +253,6 @@ Top performing pairs: BLCA TP53 (AUC=0.61), LUAD TP53 (AUC=0.60)
 
 Mean C-index across 22 cohorts: 0.557
 
-### Drug Sensitivity Prediction
-
-| Method | Drugs | Mean SCC |
-|--------|-------|----------|
-| Mean Pooling + SVR | 427 | 0.167 |
-| Top-K Pooling + SVR | 427 | **0.183** |
-
----
-
 ## Supported Tumor Types
 
 The model is trained on 22 TCGA cancer types:
@@ -282,7 +263,6 @@ The model is trained on 22 TCGA cancer types:
 - LIHC (Liver), LUAD/LUSC (Lung), OV (Ovarian)
 - PAAD (Pancreatic), PRAD (Prostate), READ (Rectal)
 - STAD (Stomach), THCA (Thyroid), THYM (Thymoma), UCEC (Uterine)
-
 ---
 
 ## Troubleshooting
