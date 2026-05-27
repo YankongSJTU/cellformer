@@ -133,7 +133,7 @@ def process_single_image(args):
 def parse_args():
     parser = argparse.ArgumentParser(description="Create merged training data with watershed")
     #parser.add_argument('--root_dir', type=str , default='../data')
-    parser.add_argument('--root_dir', type=str , default='/export/home/kongyan/project/cellformer/data')
+    parser.add_argument('--root_dir', type=str , default='../data')
     parser.add_argument('--save_path', type=str, default='../data/merged_Demo_train_data.pkl')
     parser.add_argument('--samples_per_type', type=int, default=10)
     parser.add_argument('--max_cells', type=int, default=1500)
