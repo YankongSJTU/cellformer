@@ -24,10 +24,6 @@ from torch.cuda.amp import autocast, GradScaler
 from tqdm import tqdm
 from sklearn.model_selection import train_test_split
 
-#sys.path.insert(0, '../utils/')
-#sys.path.insert(0, '../')
-#sys.path.insert(0, './')
-
 from utils.models import MILCellModelmerge, random_subgraph_crop
 from utils.DataSets import DatasetLoaderV2
 from utils.utils import custom_collate_fn, NTXentLoss, cal_loss5, mask_cell_features
@@ -35,7 +31,7 @@ from utils.utils import custom_collate_fn, NTXentLoss, cal_loss5, mask_cell_feat
 
 def parse_args():
     parser = argparse.ArgumentParser(description="CPSformer")
-    parser.add_argument('--merged_pkl', type=str, default='../data/merged_train_watershed.pkl')
+    parser.add_argument('--merged_pkl', type=str, default='../data/merged_Demo_train_data.pkl')
     parser.add_argument('--checkpoints_dir', type=str, default='../checkpoints/')
     parser.add_argument('--pretrained_model_path', type=str, default=None)
     parser.add_argument('--distilled_cell_path', type=str, default='../checkpoints/cell_distill/model.pth')
