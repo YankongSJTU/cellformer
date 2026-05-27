@@ -47,23 +47,15 @@ python CreatDataset.py --mode test --datadir DATA_PATH --image_dir IMAGE_FILE_PA
 ```python
 python CPSFormer.py --testdatadir TESTDATA_PATH --gpu_ids GPU_IDs
 ```
-## 🏆 Benchmark Results
-
-| Task                  | TCGA Cancer Type | AUROC |
-|-----------------------|------------------|-------|
-| Tumor Classification  | BRCA             | 0.92  |
-| Survival Prediction   | LUAD             | 0.81  |
-| Drug Response (PD-1)  | SKCM             | 0.76  |
-
 
 ## 📜 Citation
 If you use CellFormer in your research, please cite:
 ```bibtex
-@article{cellformer2023,
-  title={CellFormer: Hierarchical Modeling of Cellular Populations via Graph-Enhanced Transformers},
+@article{cellformer2026,
+  title={Mesoscale Cell Population Topology Decouples Histopathological Representation from Visual Domain Shifts},
   author={Yan Kong et al.},
-  journal={arXiv},
-  year={2025}
+  journal={***},
+  year={2026}
 }
 ```
 ## 🤝 Contributing
