@@ -13,6 +13,12 @@ This repository contains demo image data for testing and demonstration purposes.
 - You may optionally include a subfolder named `segmentation_results` to store cell nucleus segmentation masks or other segmentation outputs.
 - This subfolder is **not required** — if you have no segmentation results, you can simply omit it.
 
+### Pre-trained Model File
+- A pre-trained demo PKL file is provided for direct model training.
+- **Download link**: [Google Drive Link]([https://drive.google.com/your-link-here](https://drive.google.com/file/d/1GTja9oHvoBb8QD67LfmEH-gBHXNS-CgK/view?usp=sharing))
+- After downloading, place the PKL file **directly under the `data/` directory**.
+
+
 ### Example Structure
 data/
 ├── Breast_Carcinoma/
