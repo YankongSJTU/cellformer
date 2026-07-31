@@ -10,14 +10,12 @@ class NucleiDetector:
         self.radius = radius
 
     def detect_and_crop(self, image_rgb):
-        """
-        核心逻辑：从 RGB 图像中自动识别并裁剪细胞核 Patch
-        """
-        # 转灰度并进行自适应阈值处理
+        """Detect and crop cell nuclei patches from RGB image."""
+        # Convert to grayscale and apply adaptive thresholding
         gray = cv2.cvtColor(image_rgb, cv2.COLOR_RGB2GRAY)
         _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
         
-        # 距离变换与分水岭定位中心
+        # Distance transform and watershed to locate centers
         distance = ndi.distance_transform_edt(thresh)
         local_maxi = peak_local_max(distance, min_distance=10, labels=thresh, footprint=np.ones((7, 7)))
         
@@ -27,12 +25,12 @@ class NucleiDetector:
         
         for pos in local_maxi:
             y, x = pos
-            # 边界安全裁剪
+            # Boundary-safe cropping
             y1, y2 = max(0, int(y-self.radius)), min(h, int(y+self.radius))
             x1, x2 = max(0, int(x-self.radius)), min(w, int(x+self.radius))
             
             crop = image_rgb[y1:y2, x1:x2]
-            # 填充不足尺寸的边缘
+            # Pad edges that are too small
             if crop.shape[0] < self.radius*2 or crop.shape[1] < self.radius*2:
                 crop = cv2.copyMakeBorder(crop, 0, self.radius*2-crop.shape[0], 
                                           0, self.radius*2-crop.shape[1], cv2.BORDER_REFLECT)

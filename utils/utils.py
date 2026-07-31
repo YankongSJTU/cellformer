@@ -96,28 +96,28 @@ def get_patch_featuresPred(opt, imgfilelists):
     allobjregions_pos = []
     allobjregions_no = []
     
-    # 新增：记录哪些图像被处理了（未被跳过）
-    processed_img_indices = []  # 存储处理过的图像在原始列表中的索引
+    # Track processed image indices
+    processed_img_indices = []
     
     for batch_idx, (input, meta) in enumerate(tqdm(img_loader, total=len(img_loader))):
         for i in range(batchsize):
-            # 防止最后一个 batch 不足 batchsize 时越界
+            # Guard against last batch overflow
             if batch_idx * batchsize + i >= len(imgfilelists):
                 continue
             
             objregions, poses = find_obj_contour(np.uint8(input.numpy()[i]), np.uint8(meta.numpy()[i]))
             if len(objregions) == 0:
-                continue  # 跳过该图像
+                continue
                 
             for j in range(len(objregions)):
                 allobjregions.append(objregions[j])
                 allobjregions_pos.append(poses[j])
             allobjregions_no.append(len(poses))
             
-            # 记录该图像未被跳过（在原始列表中的索引）
+            # Record non-skipped image index
             processed_img_indices.append(batch_idx * batchsize + i)
     
-    # 过滤原始 imgfilelists，只保留处理过的图像
+    # Filter to processed images only
     updated_imgfilelists = [imgfilelists[idx] for idx in processed_img_indices]
     
     return allobjregions, allobjregions_pos, allobjregions_no, updated_imgfilelists
@@ -459,29 +459,28 @@ class NucleiDetector:
         self.radius = radius
 
     def detect_and_crop(self, image_rgb):
+        """Detect cell nuclei in RGB image and crop patches.
+
+        Args:
+            image_rgb: RGB image (H, W, 3)
+
+        Returns:
+            cell_patches: (N, 56, 56, 3) array
+            coordinates: (N, 2) array of cell centroids
         """
-        输入: RGB 图像 (H, W, 3)
-        输出: cell_patches (N, 56, 56, 3), coordinates (N, 2)
-        """
-        # 1. 简单的颜色解混 (H-Stain 分离) 或转灰度
-        # 这里使用一种简单鲁棒的方法：提取 Hematoxylin 通道近似值
         gray = cv2.cvtColor(image_rgb, cv2.COLOR_RGB2GRAY)
         
-        # 2. 阈值与距离变换 (替代原有的 Mask 输入)
-        # 针对 H&E 图像，细胞核通常较暗
         _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
         
         distance = ndi.distance_transform_edt(thresh)
         local_maxi = peak_local_max(distance, min_distance=10, labels=thresh, footprint=np.ones((7, 7)))
         
-        # 3. 坐标提取与裁剪
         patches = []
         coords = []
         h, w, _ = image_rgb.shape
         
         for pos in local_maxi:
             y, x = pos
-            # 越界处理
             y1, y2 = max(0, int(y-self.radius)), min(h, int(y+self.radius))
             x1, x2 = max(0, int(x-self.radius)), min(w, int(x+self.radius))
             
@@ -497,9 +496,7 @@ class NucleiDetector:
         return np.array(patches), np.array(coords)
 
 def get_cell_data_robust(opt, image_path):
-    """
-    替代原有的 getCellData，直接读取图像并检测
-    """
+    """Read image and detect cells directly (replaces getCellData)."""
     img = cv2.imread(image_path)
     if img is None: return None
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -515,52 +512,39 @@ def get_cell_data_robust(opt, image_path):
 import torch
 
 def custom_collate_fn(batch):
+    """Collate function for DataLoader with variable-length cell data.
+
+    Args:
+        batch: list of tuples (cell_tensors, img_name, num_cells, label, poses)
     """
-    batch: 由 DatasetLoaderV2.__getitem__ 返回的元组列表
-           每个元组包含: (cell_tensors, img_name, num_cells, label, poses)
-    """
-    # 1. 解构 Batch
     # cell_tensors: [N, 3, 56, 56]
     # poses: [N, 2]
     cell_tensors_list, img_names, num_cells_list, labels, poses_list = zip(*batch)
     
-    # 2. 获取当前 Batch 中最大的细胞数量
     max_cells = max(num_cells_list)
     batch_size = len(cell_tensors_list)
     
-    # 获取特征维度 (C, H, W)
     _, C, H, W = cell_tensors_list[0].shape
     
-    # 3. 初始化对齐后的张量
-    # 预分配内存提高效率
     padded_patches = torch.zeros((batch_size, max_cells, C, H, W))
     padded_poses = torch.zeros((batch_size, max_cells, 2))
-    masks = torch.zeros((batch_size, max_cells), dtype=torch.bool) # False 表示 padding
+    masks = torch.zeros((batch_size, max_cells), dtype=torch.bool)
     
-    # 4. 填充数据
     for i, (patches, poses, num_cells) in enumerate(zip(cell_tensors_list, poses_list, num_cells_list)):
-        # 填充 Patch 图像
         padded_patches[i, :num_cells] = patches
         
-        # 填充坐标
         padded_poses[i, :num_cells] = poses
         
-        # 设置 Mask (真实细胞设为 True)
         masks[i, :num_cells] = True
         
-    # 5. 转换标签为 Tensor
     batched_labels = torch.tensor(labels, dtype=torch.long)
     
-    # 返回顺序与模型 forward 接口一致
     # [B, N_max, 3, 56, 56], [B, N_max], list, [B], [B, N_max, 2]
     return padded_patches, masks, list(img_names), batched_labels, padded_poses
 def plot_loss_curve(log_path, save_dir, epoch):
-    """
-    读取 CSV 并生成损失曲线图
-    """
+    """Read CSV training log and generate loss curve plot."""
     try:
         df = pd.read_csv(log_path)
-        # 过滤掉 AVG 行，只看 Batch 级别的波动或只看 Epoch 平均
         df_batch = df[df['batch'] != 'AVG'].copy()
         df_batch['total_loss'] = pd.to_numeric(df_batch['total_loss'])
 
@@ -590,19 +574,15 @@ class NTXentLoss(nn.Module):
         self.similarity_function = nn.CosineSimilarity(dim=-1)
         self.criterion = nn.CrossEntropyLoss(reduction="sum")
     def forward(self, zip1, zip2):
-            # 自动获取当前输入所在的设备 (cuda:0, cuda:1 等)
             device = zip1.device
             N = zip1.shape[0]
 
             queries = torch.cat([zip1, zip2], dim=0)
-            # 注意：这里确保除法因子也是同一设备
             sim_matrix = torch.matmul(queries, queries.T) / self.temperature
 
-            # 核心修复：.to(device) 确保设备一致
             mask = torch.eye(2 * N, dtype=torch.bool).to(device)
             sim_matrix = sim_matrix.masked_fill(mask, -1e4)
 
-            # 动态生成正负样本掩码，全部显式指定设备
             diag_mask = torch.eye(2 * N, dtype=torch.bool).to(device)
             pos_mask = torch.diag(torch.ones(N), N).to(device).bool()
             pos_mask_rev = torch.diag(torch.ones(N), -N).to(device).bool()
@@ -622,27 +602,23 @@ class NTXentLoss(nn.Module):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Supervised Contrastive Loss (SupCon) — 判别损失
 #   Khosla et al., "Supervised Contrastive Learning", NeurIPS 2020
 #
-# 与 NTXentLoss 的区别: NTXent 仅把同一图像的两个增广视图视为正样本对
-# (无监督); SupCon 则利用类别标签, 把 batch 内所有同类样本(含其它视图)都
-# 当作正样本, 异类样本当作负样本, 显式监督嵌入空间按类别聚类, 从而学得
-# 更具判别性的特征. 适合在 CPSformer 已有的对比/分类损失之上叠加.
 # ─────────────────────────────────────────────────────────────────────────────
 class SupConLoss(nn.Module):
-    """Supervised Contrastive Loss (判别损失).
+    """Supervised Contrastive Loss (Khosla et al., NeurIPS 2020).
 
     Args:
-        temperature: 温度系数, 控制相似度分布的锐度 (与对比损失保持一致, 默认 0.1).
-        base_temperature: 论文中的基准温度, 用于稳定梯度尺度 (默认 0.07).
+        temperature: temperature scaling for similarity distribution (default 0.1).
+        base_temperature: base temperature from the paper for gradient
+            stabilization (default 0.07).
 
     forward(features, labels):
-        features : [N, D] 已 L2 归一化或未归一化的嵌入 (内部会归一化).
-        labels   : [N]   每个样本的类别标签.
-    多视图模式 (features 为 [N, D], labels 为 [N], 由调用方将多个视图在
-    batch 维拼接后传入即可, 例如 torch.cat([feat1, feat2]) 配合
-    torch.cat([labels, labels])).
+        features : [N, D] embeddings (L2 normalized internally).
+        labels   : [N] class labels per sample.
+
+    Multi-view mode: concatenate features/labels from multiple views along
+    the batch dimension before calling forward.
     """
     def __init__(self, temperature=0.1, base_temperature=0.07):
         super(SupConLoss, self).__init__()
@@ -655,38 +631,27 @@ class SupConLoss(nn.Module):
             raise ValueError(f"features must be [N, D], got {features.shape}")
         N = features.size(0)
 
-        # 归一化到单位球面, 点积即余弦相似度
         features = F.normalize(features, dim=1)
 
-        # 计算两两余弦相似度并除以温度  →  logits [N, N]
         logits = torch.matmul(features, features.T) / self.temperature
 
-        # 屏蔽自身 (对角线), 避免自身成为正/负样本
         self_mask = torch.eye(N, dtype=torch.bool, device=device)
         logits = logits.masked_fill(self_mask, -1e4)
 
-        # 构造正样本掩码: 同类 (且非自身) 为正
         labels = labels.view(-1, 1)
-        label_mask = torch.eq(labels, labels.T).float().to(device)  # [N, N], 含对角线
-        pos_mask = label_mask * (~self_mask).float()                # 去掉对角线
+        label_mask = torch.eq(labels, labels.T).float().to(device)
+        pos_mask = label_mask * (~self_mask).float()
 
-        # 若 batch 中无任何同类样本 (某个样本唯一类), 跳过该样本
-        pos_count = pos_mask.sum(1)                  # [N] 每个样本的正样本数
+        pos_count = pos_mask.sum(1)
         valid = pos_count > 0
         if valid.sum() == 0:
-            # 整个 batch 无正样本, 返回 0 (保持计算图以避免空梯度报错)
             return (logits.sum() * 0.0)
 
-        # log-softmax 在所有非自身样本上做归一化 (作为分母的负样本也来自同类)
         log_prob = logits - torch.logsumexp(logits, dim=1, keepdim=True)
 
-        # 对每个样本, 在其正样本上取平均 log-概率
-        # 用 pos_mask 把非正样本位置置 0 求和, 再除以正样本数
         mean_log_prob_pos = (pos_mask * log_prob).sum(1) / pos_count.clamp(min=1.0)
 
-        # 论文公式: -base_temp/temp * mean_log_prob_pos
         loss = -(self.base_temperature / self.temperature) * mean_log_prob_pos
 
-        # 仅对存在正样本的样本计算损失
         loss = loss[valid].mean()
         return loss

@@ -259,9 +259,6 @@ class MILCellModelmerge(nn.Module):
     ):
         super().__init__()
         self.use_gradient_checkpointing = use_gradient_checkpointing
-        # 分块前向 cell_encoder: 将 B*N 张细胞图分 chunk 送入 ResNet,
-        # 限制单次 forward 的峰值显存 (conv1 输出 [B*N,64,28,28] 在大 batch 下
-        # 可达十几 GiB). 0 表示不分块.
         self.encoder_chunk_size = encoder_chunk_size
 
         # 1. Cell visual encoder

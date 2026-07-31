@@ -6,7 +6,7 @@ import torchvision.models as models
 from torch.utils.data.dataset import Dataset
 import random
 
-# Pickle-safe Identity transform (替代 transforms.Identity)
+# Pickle-safe Identity transform (replaces transforms.Identity)
 class IdentityTransform:
     """A picklable identity transform that returns input unchanged."""
     def __call__(self, x):
@@ -146,7 +146,7 @@ class aDatasetLoaderV2(torch.utils.data.Dataset):
         self.patches = data['x_nucpatch']
         self.coords = data['x_nucpatch_pos']
         self.names = data['x_imgname']
-        self.labels = data['x_tumor'] # 需根据 label_map 转换
+        self.labels = data['x_tumor']
         self.is_train = is_train
         
         self.transform = transforms.Compose([
@@ -161,14 +161,14 @@ class aDatasetLoaderV2(torch.utils.data.Dataset):
         img_patches = self.patches[index] # (N, 56, 56, 3)
         img_coords = self.coords[index]
         
-        # 采样逻辑
+        # Sampling logic
         num_cells = len(img_patches)
         if num_cells > 2500:
             idx = np.random.choice(num_cells, 2500, replace=False)
             img_patches = img_patches[idx]
             img_coords = img_coords[idx]
             
-        # 批量应用转换
+        # Apply transforms in batch
         tensors = torch.stack([self.transform(p) for p in img_patches])
         
         return tensors, self.names[index], len(img_patches), self.labels[index], torch.from_numpy(img_coords)
@@ -180,21 +180,23 @@ from torch.utils.data import Dataset
 
 class DatasetLoaderV2(Dataset):
     def __init__(self, data, size=56, max_cells=2500, is_train=True):
+        """Load pkl data from prepare_data.py.
+
+        Args:
+            data: dict loaded from pkl file
+            size: cell patch resize dimension (default 56)
+            max_cells: max cells per image (prevents OOM)
         """
-        data: 加载自 CreateDataset.py 生成的 pkl 文件
-        size: 细胞 Patch 的缩放尺寸 (默认 56)
-        max_cells: 每张图最多处理的细胞数量 (防止 OOM)
-        """
-        self.X_nucpatch = data['x_nucpatch']      # [N, 56, 56, 3] 的列表
-        self.X_nucpos = data['x_nucpatch_pos']    # [N, 2] 的列表
+        self.X_nucpatch = data['x_nucpatch']
+        self.X_nucpos = data['x_nucpatch_pos']
         self.X_imgname = data['x_imgname']
-        self.X_labels = data['x_tumor']           # 肿瘤类型字符串
+        self.X_labels = data['x_tumor']
         
         self.size = size
         self.max_cells = max_cells
         self.is_train = is_train
 
-        # 肿瘤类别映射 (请根据你的实际情况修改)
+        # Tumor type mapping
         self.label_map = {
             "UCEC": 0, "UCEC1":0,"BLCA": 1, "BRCA": 2, "CESC": 3, "CHOL": 4, 
             "COAD": 5, "DLBC": 6, "ESCA": 7, "GBM": 8, "HNSC": 9,
@@ -203,7 +205,7 @@ class DatasetLoaderV2(Dataset):
             "READ": 20, "STAD": 21, "THCA": 22, "THYM": 23
         }
 
-        # 图像增强：加入旋转以增强 CPSformer 的旋转不变性特性
+        # Augmentation: rotation for rotation-invariance
         self.transform = transforms.Compose([
             transforms.ToPILImage(),
             transforms.RandomRotation(180) if is_train else IdentityTransform(),
@@ -213,7 +215,6 @@ class DatasetLoaderV2(Dataset):
         ])
 
     def __getitem__(self, index):
-        # 1. 获取当前图的所有细胞 Patch 和坐标
         patches = self.X_nucpatch[index]  # np.uint8, [N, 56, 56, 3]
         poses = self.X_nucpos[index]      # [N, 2]
         img_name = self.X_imgname[index]
@@ -222,17 +223,14 @@ class DatasetLoaderV2(Dataset):
 
         num_cells = patches.shape[0]
 
-        # 2. 细胞下采样 (防止单张图细胞过多导致显存溢出)
         if num_cells > self.max_cells:
             selected_idx = np.random.choice(num_cells, self.max_cells, replace=False)
             patches = patches[selected_idx]
             poses = poses[selected_idx]
             num_cells = self.max_cells
 
-        # 3. 对每个细胞 Patch 进行预处理
         cell_tensors = torch.stack([self.transform(p) for p in patches])
 
-        # 4. 返回数据
         return cell_tensors, img_name, num_cells, label, torch.from_numpy(poses)
 
     def __len__(self):
@@ -240,21 +238,23 @@ class DatasetLoaderV2(Dataset):
         return len(self.X_imgname)
 class DatasetLoaderV3(Dataset):
     def __init__(self, data, size=56, max_cells=2500, is_train=True):
+        """Load pkl data from prepare_data.py.
+
+        Args:
+            data: dict loaded from pkl file
+            size: cell patch resize dimension (default 56)
+            max_cells: max cells per image (prevents OOM)
         """
-        data: 加载自 CreateDataset.py 生成的 pkl 文件
-        size: 细胞 Patch 的缩放尺寸 (默认 56)
-        max_cells: 每张图最多处理的细胞数量 (防止 OOM)
-        """
-        self.X_nucpatch = data['x_nucpatch']      # [N, 56, 56, 3] 的列表
-        self.X_nucpos = data['x_nucpatch_pos']    # [N, 2] 的列表
+        self.X_nucpatch = data['x_nucpatch']
+        self.X_nucpos = data['x_nucpatch_pos']
         self.X_imgname = data['x_imgname']
-        self.X_labels = data['x_tumor']           # 肿瘤类型字符串
+        self.X_labels = data['x_tumor']
         
         self.size = size
         self.max_cells = max_cells
         self.is_train = is_train
 
-        # 肿瘤类别映射 (请根据你的实际情况修改)
+        # Tumor type mapping
         self.label_map = {
             "UCEC": 0, "BLCA": 1,"BRCA1":2,"BRCA2":2, "BRCA": 2, "CESC": 3, "CHOL": 4, 
             "COAD": 5, "DLBC": 6, "ESCA": 7, "GBM": 8, "HNSC": 9,
@@ -263,7 +263,7 @@ class DatasetLoaderV3(Dataset):
             "READ": 20, "STAD": 21, "THCA": 22, "THYM": 23
         }
 
-        # 图像增强：加入旋转以增强 CPSformer 的旋转不变性特性
+        # Augmentation: rotation for rotation-invariance
         self.transform = transforms.Compose([
             transforms.ToPILImage(),
             transforms.RandomRotation(180) if is_train else IdentityTransform(),
@@ -273,7 +273,6 @@ class DatasetLoaderV3(Dataset):
         ])
 
     def __getitem__(self, index):
-        # 1. 获取当前图的所有细胞 Patch 和坐标
         patches = self.X_nucpatch[index]  # np.uint8, [N, 56, 56, 3]
         poses = self.X_nucpos[index]      # [N, 2]
         img_name = self.X_imgname[index]
@@ -282,19 +281,15 @@ class DatasetLoaderV3(Dataset):
 
         num_cells = patches.shape[0]
 
-        # 2. 细胞下采样 (防止单张图细胞过多导致显存溢出)
         if num_cells > self.max_cells:
             selected_idx = np.random.choice(num_cells, self.max_cells, replace=False)
             patches = patches[selected_idx]
             poses = poses[selected_idx]
             num_cells = self.max_cells
 
-        # 3. 对每个细胞 Patch 进行预处理
-        # 这种批量 transform 是最耗时的，但为了数据增强必须做
+        # Batch transform is slow but necessary for augmentation
         cell_tensors = torch.stack([self.transform(p) for p in patches])
 
-        # 4. 返回数据
-        # 返回：细胞张量, 掩码(在 collate 中处理), 图像名, 类别标签, 原始坐标
         return cell_tensors, img_name, num_cells, label, torch.from_numpy(poses)
 
     def __len__(self):
