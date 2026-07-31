@@ -476,6 +476,6 @@ This project is released under the BSD 3-Clause License. See [LICENSE](LICENSE) 
 
 ## Acknowledgments
 
-- Foundation model features: [UNI2](https://github.com/mahmoodlab/UNI), [CONCH](https://github.com/MahmoodLab/CONCH), [TITAN](https://github.com/dccxi/TITAN)
+- Foundation model features: [UNI2](https://github.com/mahmoodlab/UNI), [CONCH](https://github.com/MahmoodLab/CONCH), [TITAN](https://github.com/dccxi/TITAN),[CHIEF](https://github.com/hms-dbmi/CHIEF).
 - Nucleus segmentation models trained on H&E histopathology datasets
 - TCGA project for providing publicly available cancer genomics and pathology data
