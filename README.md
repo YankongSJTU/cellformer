@@ -380,18 +380,6 @@ python DownstreamTask/downstream_tnm.py \
 **Input:** `clinical/{cohort}_tnm.csv` with `t_stage`, `n_stage`, `m_stage` columns
 **Output:** Accuracy and AUC per staging task
 
-### Gleason Grading (PRAD)
-
-```bash
-python DownstreamTask/downstream_gleason.py \
-    --features_dir ./features \
-    --clinical_dir ./data/clinical/clinical \
-    --output_dir ./results_gleason
-```
-
-**Input:** `clinical/{cohort}_gdc_clinical.csv` with `gleason_score` column
-**Output:** Accuracy, AUC, and F1 for ISUP Grade Groups 1–5
-
 ### One-Click: Run All Tasks
 
 ```bash
@@ -438,7 +426,6 @@ Download pre-trained model weights before running inference or fine-tuning:
 | Cell Encoder | `checkpoints/checkpoints_cellfeature/model.pth` | 43 MB | Distilled ResNet-18 cell feature extractor (from UNI2) |
 | Nucleus Segmentation | `checkpoints/nucseg_deeplabv3/models/model.pth` | 152 MB | DeepLabV3 (ResNet50) for automatic nucleus segmentation |
 
-📥 **[Download Pre-trained Models](#)** (coming soon)
 
 ## Project Structure
 
@@ -469,23 +456,13 @@ CPSformer/
 └── checkpoints/               # Pre-trained model weights
 ```
 
-## Performance Benchmark
-
-| Task | Metric | CPSformer | ResNet50 | CONCH | UNI2 |
-|------|--------|-----------|----------|-------|------|
-| WSI Classification | Accuracy | — | — | — | — |
-| Survival (C-index) | Mean ± Std | — | — | — | — |
-| Mutation (AUC) | Mean | — | — | — | — |
-| Drug (SCC) | Mean | — | — | — | — |
-
-> Results from our paper. Detailed benchmarks will be added upon publication.
 
 ## Citation
 
 If you use CPSformer in your research, please cite:
 
 ```bibtex
-@article{cpsformer2024,
+@article{cpsformer2026,
   title={CPSformer: Cell Patch Set Transformer for Pathology Image Analysis},
   author={},
   journal={},
@@ -500,5 +477,5 @@ This project is released under the BSD 3-Clause License. See [LICENSE](LICENSE) 
 ## Acknowledgments
 
 - Foundation model features: [UNI2](https://github.com/mahmoodlab/UNI), [CONCH](https://github.com/MahmoodLab/CONCH), [TITAN](https://github.com/dccxi/TITAN)
-- Nucleus segmentation models trained on IHC histopathology datasets
+- Nucleus segmentation models trained on H&E histopathology datasets
 - TCGA project for providing publicly available cancer genomics and pathology data
