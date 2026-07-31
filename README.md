@@ -1,315 +1,508 @@
-# CPSFormer: Cell Population Structure Representations via Transformer 
+# CPSformer: Cell Patch Set Transformer for Pathology Image Analysis
 
-**Automatic modeling of cell population structures in histopathology images using hierarchical Transformer architectures**
+[![PyTorch](https://img.shields.io/badge/PyTorch-1.12+-ee4c37.svg)](https://pytorch.org/)
+[![Python](https://img.shields.io/badge/Python-3.10-blue.svg)](https://www.python.org/)
+[![License](https://img.shields.io/badge/License-BSD%203--orange.svg)](LICENSE)
 
-## 📖 Overview
+**CPSformer** (Cell Patch Set Transformer) is a graph-based framework for whole-slide image (WSI) analysis in computational pathology. It models pathology images as **cell-level graphs** — where each cell is a node with visual and spatial features, and edges capture cell-cell spatial relationships — enabling interpretable, structure-aware representation learning for cancer diagnosis, prognosis prediction, and treatment response.
 
-CPSformer is a self-supervised pre-training framework for pathology image analysis. The model extracts cell-level visual features, models spatial topology relationships via Graph Attention Networks (GAT), and aggregates global context through Transformers to generate 1024-dimensional image features. These features can be used for downstream tasks including tumor classification, mutation prediction, drug sensitivity prediction, and survival analysis.
+## Overview
 
-## Key Features
+```
+┌─────────────┐    ┌──────────────┐    ┌─────────────┐    ┌──────────────┐
+│  ROI Image   │───▶│   Nucleus    │───▶│   Cell-level│───▶│  CPSformer   │
+│  (H&E patch) │    │ Segmentation │    │   Graph +    │    │  Feature     │
+│              │    │  (Auto/Custom)│    │   Transformer│    │  (1024-dim)  │
+└─────────────┘    └──────────────┘    └─────────────┘    └──────┬───────┘
+                                                           │
+              ┌────────────────┬────────────────┬─────────┴──────────┐
+              ▼                ▼                ▼                    ▼
+        ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────────┐
+        │ Survival │  │ Mutation│  │   Drug   │  │ TNM Staging │
+        │ Prognosis│  │  Status  │  │Response  │  │ Gleason Grading│
+        └──────────┘  └──────────┘  └──────────┘  └──────────────┘
+```
 
-- **Topology-Aware**: Models spatial relationships between cells via GAT with 2D position embeddings
-- **Cross-Scale Invariance**: Achieved through random subgraph crop augmentation during training
-- **Dual Pooling Mechanism**: Combines mean pooling with sparse attention pooling
-- **Flexible Segmentation**: Supports semantic segmentation masks + watershed algorithm for nuclei detection
+### Key Features
 
+- **Cell-level representation**: Each cell is explicitly modeled as a graph node with visual features (from a distilled foundation model) and spatial coordinates
+- **Two-scale spatial graph**: Combines local KNN neighbors (fine-grained) with global connections (context-aware) via attention-weighted GAT
+- **Dual pooling**: Mean pooling + sparse-attention query pooling for complementary bag-level representations
+- **Cross-scale contrastive pre-training**: Full-patch view vs. random subgraph crop augmentation for scale-invariant representations
+- **Automatic nucleus segmentation**: Users only need to provide ROI images — nucleus segmentation runs automatically with built-in DeepLabV3 + UNet ensemble
+- **Customizable segmentation**: Users can provide their own segmentation masks or replace the segmentation model entirely
+
+## Table of Contents
+
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Demo Data](#demo-data)
+- [Data Preparation](#data-preparation)
+- [Training](#training)
+- [Inference / Feature Extraction](#inference--feature-extraction)
+- [Downstream Tasks](#downstream-tasks)
+- [Advanced: WSI-Level Analysis](#advanced-wsi-level-analysis)
+- [Pre-trained Models](#pre-trained-models)
+- [Project Structure](#project-structure)
+- [Performance Benchmark](#performance-benchmark)
+- [Citation](#citation)
+- [License](#license)
 
 ## Installation
 
-### Dependencies
+### Prerequisites
+- Python >= 3.10
+- PyTorch >= 1.12 with CUDA support
+- NVIDIA GPU (recommended; CPU mode possible but slow)
+
+### Setup
 
 ```bash
-# Core dependencies
-pip install torch torchvision
-pip install torch_geometric
-pip install scipy scikit-image scikit-learn
-pip install opencv-python Pillow tqdm pandas numpy
+git clone https://github.com/your-org/CPSformer.git
+cd CPSformer
 
-# Optional dependencies
-pip install umap-learn matplotlib seaborn  # for visualization
+# Option 1: One-click environment setup
+bash scripts/setup_env.sh
+
+# Option 2: Manual setup
+conda create -n cpsformer python=3.10 -y
+conda activate cpsformer
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+pip install torch-geometric
+pip install -r requirements.txt
 ```
 
-### Requirements
-
-- Python 3.8+
-- PyTorch 1.12+
-- CUDA-capable GPU (recommended)
-
----
-## Data & Model Downloads
-
-| Item | Description | Size | Link |
-|------|-------------|------|------|
-| Demo Data | Sample training data (22 TCGA cohorts, ~10 images each) | ~800 MB | [Google Drive](https://drive.google.com/file/d/1MMHdEp5s6MmZD-H1JQlOisHk5XBa1z_K/view?usp=drive_link) |
-| Pretrained Model | CPSformer checkpoint trained on 22 TCGA cancer types | ~50 MB | [Google Drive](https://drive.google.com/file/d/1n9AvL2jznr2npJaTGEBC_xoDm37VQ68M/view?usp=drive_link) |
-| Cell Encoder | Distilled ResNet-18 cell encoder (from UNI2) | ~45 MB | [Google Drive](https://drive.google.com/file/d/1SSJfQQPKhvxBGhlL9p3N0Jaava-hRV6N/view?usp=drive_link) |
-
-After downloading, organize files as follows:
-```
-CPSformer/
-├── data/
-│   ├── image/                    # Demo tissue images (PNG)
-│   ├── segment/                  # Demo segmentation masks (PNG)
-│   └── merged_Demo_train_data.pkl  # Demo training data
-├── checkpoints/
-│   ├── pretrain/
-│   │   └── best_model.pth        # Main pretrained model
-│   └── cell_distill/
-│   │   └── model.pth             # Cell encoder weights
-```
-
----
-
-
-### Option 1: Extract Features from Your Own Images
-
-Prepare your data with image files and corresponding segmentation masks:
-
-```
-data/
-├── image/
-│   ├── sample1.png
-│   ├── sample2.png
-│   └── ...
-├── segment/
-│   ├── sample1.png    # Same filename as image
-│   ├── sample2.png
-│   └── ...
-```
-
-**Segmentation mask requirements:**
-- Grayscale PNG format
-- Nuclei pixels > 0, background = 0
-- Same dimensions as the image
-
-Run feature extraction:
+## Quick Start
 
 ```bash
-python src/extract_features.py \
-    --image_dir data/image \
-    --segment_dir data/segment \
-    --checkpoint checkpoints/pretrain/best_model.pth \
-    --distilled_path checkpoints/cell_distill/model.pth \
-    --output results/features.csv \
-    --batch_size 16 \
+# 1. Download pre-trained models and demo data
+#    See [Demo Data](#demo-data) and [Pre-trained Models](#pre-trained-models) sections
+
+# 2. Prepare data (auto segmentation included)
+bash scripts/1_prepare_data.sh \
+    --input_dir ./demo/TCGA \
+    --output_dir ./demo/prepared \
+    --gpu 0
+
+# 3. Fine-tune on your data
+bash scripts/2_train_finetune.sh \
+    --pkl_dir ./demo/prepared \
+    --gpu 0 \
+    --batch_size 64 \
+    --epochs 50
+
+# 4. Extract features for downstream tasks
+bash scripts/3_extract_features.sh \
+    --input_dir ./demo/TCGA \
+    --gpu 0
+
+# 5. Run downstream evaluation
+bash scripts/4_run_downstream.sh \
+    --features_dir ./demo/TCGA/features \
+    --clinical_dir ./demo/clinical
+```
+
+## Demo Data
+
+We provide a small demo dataset to help you get started quickly:
+
+| Cohort | # Images | Cancer Type | Description |
+|--------|----------|-------------|-------------|
+| BRCA   | 78       | Breast      | Invasive breast carcinoma |
+| LUAD   | 78       | Lung        | Lung adenocarcinoma |
+
+### Download
+
+📥 **[Download Demo Data](#)** (coming soon)
+
+### Expected Directory Structure
+
+```
+demo/
+├── TCGA/
+│   ├── BRCA/
+│   │   ├── TCGA-3C-AALI-01Z-00-DX1.png
+│   │   ├── TCGA-3C-AALI-01Z-00-DX1.png
+│   │   ├── ...
+│   │   └── segment/                    # Optional: pre-computed masks
+│   │       ├── TCGA-3C-AALI-01Z-00-DX1.png
+│   │       └── ...
+│   └── LUAD/
+│       ├── ...
+│       └── segment/
+└── clinical/
+    ├── survival/
+    │   └── BRCA.survival.csv
+    ├── mutation/
+    │   └── BRCA.all
+    └── drug/
+        └── drug.csv
+```
+
+Each image should be a **1000×1000 pixel** ROI patch (region of interest) cropped from a diagnostic whole-slide image, in PNG, JPG, or TIF format.
+
+## Data Preparation
+
+CPSformer operates on **cell-level graphs** extracted from ROI images. The data preparation pipeline converts your images into training-ready PKL files.
+
+### Automatic Nucleus Segmentation (Recommended)
+
+If you only have ROI images (no segmentation masks), CPSformer will **automatically segment nuclei** using our built-in:
+
+- **DeepLabV3** (ResNet50 backbone, trained on IHC histopathology) — **included**
+- Followed by **Watershed splitting** for touching nuclei
+
+```
+ROI Image (1000×1000)
+        │
+        ▼
+  ┌─────────────┐
+  │ DeepLabV3   │──▶ binary mask
+  │ (ResNet50)  │
+  └─────────────┘
+        │
+        ▼
+    Watershed Split
+        │
+        ▼
+  Cell patches (56×56) + Centroid coordinates
+        │
+        ▼
+    Training PKL file
+```
+
+> **Note:** An optional UNet+Attention ensemble model is available upon request for marginally better segmentation quality (adds ~519 MB). The default DeepLabV3 alone provides excellent results for most pathology images.
+
+### One-Click Preparation
+
+```bash
+bash scripts/1_prepare_data.sh \
+    --input_dir ./my_data \
+    --output_dir ./prepared_data \
     --gpu 0
 ```
 
-**Output format:** CSV with 1026 columns
-- Columns `0`-`1023`: 1024-dimensional L2-normalized feature vector
-- Column `samplename`: Patient ID (first 12 characters of filename)
-- Column `imgname`: Original filename
+This script:
+- Scans each cohort subdirectory for images
+- Automatically runs segmentation for images without masks
+- Extracts cell patches (56×56) and centroid coordinates
+- Saves to PKL format
 
-### Option 2: Extract Features from Pre-processed Data
+### Using Your Own Segmentation
 
-If you have a pre-processed pickle file:
+You can provide pre-computed segmentation masks:
+
+```
+my_data/
+├── BRCA/
+│   ├── image1.png
+│   ├── image2.png
+│   └── segment/           # Put masks here
+│       ├── image1.png     # Binary mask (255=nucleus, 0=background)
+│       └── image2.png
+```
+
+Run with `--skip_seg` to use existing masks:
 
 ```bash
-python src/extract_features.py \
-    --pkl_path data/merged_Demo_train_data.pkl \
-    --checkpoint checkpoints/pretrain/best_model.pth \
-    --output results/features.csv
+bash scripts/1_prepare_data.sh \
+    --input_dir ./my_data \
+    --output_dir ./prepared_data \
+    --skip_seg
 ```
 
----
+### Replacing the Segmentation Model
 
-## Training from Scratch
+To use a custom segmentation model, replace the `run_deeplabv3_seg()` function in `nucseg_modules/nucseg_deeplabv3.py`. Your function should return:
 
-### Step 1: Prepare Training Data
-
-Organize TCGA-style data by cohort:
-
+```python
+def run_deeplabv3_seg(image_paths, work_dir, gpu_id=0):
+    """
+    Custom nucleus segmentation function.
+    
+    Args:
+        image_paths: List of paths to ROI images
+        work_dir: Directory for intermediate files
+        gpu_id: GPU device ID
+        
+    Returns:
+        dict: {filename: numpy_mask}  # mask is H×W uint8 (0=background, 255=nucleus)
+    """
+    # Load and run your custom model here
+    ...
 ```
-data/
-├── dataBLCA/
-│   ├── image/
-│   └── segment/
-├── dataBRCA/
-│   ├── image/
-│   └── segment/
-├── ...
+
+### PKL File Format
+
+Each PKL file contains a dictionary with the following keys:
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `x_samplename` | `list[str]` | Patient/sample ID |
+| `x_imgname` | `list[str]` | Image filename |
+| `x_nucpatch` | `list[np.ndarray]` | Cell patches, each `[N, 56, 56, 3]` uint8 |
+| `x_nucpatch_pos` | `list[np.ndarray]` | Cell centroid coordinates, each `[N, 2]` float32 (pixel space [0, 1000)) |
+| `x_tumor` | `list[str]` | Tumor type / cohort label |
+
+### Extracted Feature Format
+
+After feature extraction, each cohort produces a CSV file:
+
+```csv
+samplename,imgname,feature_0,feature_1,...,feature_1023
+TCGA-XX-XXXX,TCGA-XX-XXXX-01Z-00-DX1.png,0.123,-0.456,...,0.789
 ```
 
-Run data preparation:
+## Training
+
+CPSformer uses **pre-trained weights + fine-tuning**: start from weights pre-trained on 24 TCGA cancer types, then fine-tune on your own dataset.
+
+### One-Click Fine-Tuning
 
 ```bash
-python src/create_merged.py \
-    --root_dir /path/to/data \
-    --save_path data/merged_train_data.pkl \
-    --samples_per_type 1000 \
-    --max_cells 2500 \
-    --num_workers 12
+bash scripts/2_train_finetune.sh \
+    --pkl_dir ./prepared_data \
+    --gpu 0 \
+    --batch_size 64 \
+    --epochs 100
 ```
 
-**Parameters:**
-
-| Argument | Default | Description |
-|----------|---------|-------------|
-| `--root_dir` | Required | Root directory containing cohort folders |
-| `--save_path` | Required | Output pickle file path |
-| `--samples_per_type` | 1000 | Max images per tumor type |
-| `--max_cells` | 2500 | Max cells per image |
-| `--num_workers` | 12 | Parallel workers |
-
-### Step 2: Train Model
+### Direct Python Usage
 
 ```bash
-CUDA_VISIBLE_DEVICES=0,1 python src/train_main.py \
-    --merged_pkl data/merged_train_data.pkl \
-    --checkpoints_dir checkpoints/pretrain \
-    --distilled_cell_path checkpoints/cell_distill/model.pth \
-    --epochs 200 \
-    --batch_size 32 \
+python train_single_cohort.py \
+    --pkl_dir ./prepared_data \
+    --pretrained_model_path ./checkpoints_supcon/best_model.pth \
+    --distilled_cell_path ./checkpoints_cell/model.pth \
+    --checkpoints_dir ./checkpoints_finetuned \
+    --batch_size 64 \
+    --epoch_count 100 \
     --lr 5e-5 \
-    --dmodel 256 \
-    --featuredim 1024
+    --gpu_id 0 \
+    --gradient_checkpointing \
+    --encoder_chunk_size 32000
 ```
 
-**Training parameters:**
+### Key Training Parameters
 
-| Argument | Default | Description |
-|----------|---------|-------------|
-| `--epochs` | 100 | Training epochs |
+| Parameter | Default | Description |
+|-----------|---------|-------------|
 | `--batch_size` | 32 | Batch size per GPU |
-| `--lr` | 5e-5 | Learning rate (AdamW) |
-| `--dmodel` | 256 | Hidden dimension |
-| `--featuredim` | 1024 | Output feature dimension |
-| `--max_cells` | 2500 | Max cells per image |
-| `--alpha` | 0.1 | Instance loss weight |
-| `--gamma` | 0.1 | Diverse loss weight |
+| `--accum_steps` | 1 | Gradient accumulation steps (effective = batch × accum) |
+| `--max_cells` | 2500 | Maximum cells per image (reduce if OOM) |
+| `--lr` | 5e-5 | Learning rate |
+| `--epoch_count` | 200 | Number of training epochs |
+| `--alpha` | 0.1 | Instance diversity loss weight |
+| `--gamma` | 0.1 | Feature diversity loss weight |
 | `--delta` | 0.8 | Classification loss weight |
+| `--beta` | 0.1 | Supervised contrastive loss weight |
 | `--temp` | 0.1 | Contrastive temperature |
-| `--crop_min_frac` | 0.3 | Min crop fraction (cross-scale) |
-| `--crop_max_frac` | 0.9 | Max crop fraction (cross-scale) |
+| `--gradient_checkpointing` | flag | Enable Transformer gradient checkpointing (saves memory) |
+| `--encoder_chunk_size` | 0 | Chunk size for cell encoder (0=disabled; use 32000 for large batches) |
 
-**Output:**
-- `checkpoints/<name>/best_model.pth` — Best model checkpoint
-- `checkpoints/<name>/training_log.csv` — Training log
+### Loss Functions
 
----
-
-## Model Architecture
-```
-Input: Cell patches [B, N, 3, 56, 56] + Coordinates [B, N, 2]
-              │
-        ┌─────┴─────┐
-        │ ResNet-18 │  512-dim visual features (distilled from UNI2)
-        │ (frozen)  │
-        └─────┬─────┘
-              │ Linear(512→256)
-        ┌─────┴─────┐
-        │ + 2D Pos  │  Position embedding (raw pixel coords [0,1000])
-        └─────┬─────┘
-              │
-        ┌─────┴─────┐
-        │ 2× GAT    │  Graph attention (KNN graph, z-score normalized)
-        └─────┬─────┘
-              │
-        ┌─────┴─────┐
-        │ 2× Trans  │  Transformer encoder (global context)
-        └─────┬─────┘
-              │
-        ┌─────┴─────┐
-        │ Dual Pool │  Mean pooling + Sparse attention (4 queries)
-        │ [1+4]×256 │
-        └─────┬─────┘
-              │ MLP + L2-Norm
-              │
-Output: [B, 1024] normalized features + [B, 24] class logits
-```
-
-**Key Design Choices:**
-- **Coordinate convention**: Raw pixel values [0, 1000] without pre-normalization
-- **Graph construction**: Z-score normalized internally for scale-invariant topology
-- **Output features**: L2-normalized, suitable for cosine similarity computation
-
----
-
-## Training Loss
+CPSformer uses a composite loss:
 
 ```
-Total Loss = (1-α-γ) × L_contrastive + γ × L_diverse + α × L_instance + δ × L_classification
+L_total = w_con × L_contrastive + w_div × L_diversity + w_ins × L_instance + w_cls × L_classification + w_supcon × L_SupCon
 ```
 
-| Loss | Weight | Purpose |
-|------|--------|---------|
-| InfoNCE Contrastive | 0.8 | Learn discriminative global features |
-| Diverse Loss | 0.1 | Increase feature diversity |
-| Instance Loss | 0.1 | Instance-level discrimination |
-| Cross-Entropy | 0.8 | Tumor type classification supervision |
+- **L_contrastive** (NTXentLoss): Cross-view contrastive loss between cell-dropout and subgraph-crop augmentations
+- **L_diversity**: Covariance off-diagonal penalty for feature uniformity
+- **L_instance**: Instance-level diversity via pairwise cosine similarity
+- **L_classification**: Cross-entropy for tumor type classification
+- **L_SupCon** (SupConLoss): Supervised contrastive loss using class labels
 
----
+## Inference / Feature Extraction
 
-## Downstream Performance
+Extract 1024-dimensional CPS features from your ROI images:
 
-### Survival Analysis (Cox Regression)
+```bash
+bash scripts/3_extract_features.sh \
+    --input_dir ./my_data \
+    --model_path ./checkpoints_supcon/best_model.pth \
+    --gpu 0
+```
 
-| Cohort | N Patients | C-index |
-|--------|------------|---------|
-| BRCA | 284 | **0.668** |
-| DLBC | 41 | **0.647** |
-| PAAD | 151 | **0.635** |
-| UCEC | 144 | **0.624** |
+This script will:
+1. Check each cohort for pre-computed segmentation masks
+2. **Automatically run nucleus segmentation** if masks are missing
+3. Extract cell patches and run CPSformer to produce 1024-dim features
+4. Save CSV files: `{cohort}.cps_feature.csv`
 
-Mean C-index across 22 cohorts: 0.557
+## Downstream Tasks
 
-## Supported Tumor Types
+CPSformer features support multiple downstream clinical tasks:
 
-The model is trained on 22 TCGA cancer types:
+### Survival Prognosis Prediction
 
-- BLCA (Bladder), BRCA (Breast), CESC (Cervical), COAD (Colon)
-- DLBC (Lymphoma), ESCA (Esophageal), GBM (Glioblastoma)
-- HNSC (Head & Neck), KIRC/KIRP (Kidney), LGG (Low-grade Glioma)
-- LIHC (Liver), LUAD/LUSC (Lung), OV (Ovarian)
-- PAAD (Pancreatic), PRAD (Prostate), READ (Rectal)
-- STAD (Stomach), THCA (Thyroid), THYM (Thymoma), UCEC (Uterine)
----
+```bash
+python downstream_survival.py \
+    --features_dir ./features \
+    --survival_dir ./clinical/survival \
+    --output_dir ./results_survival
+```
 
-## Troubleshooting
+**Input:** `features/{cohort}.cps_feature.csv`, `clinical/survival/{cohort}.survival.csv` (samplename, time, status)
+**Output:** C-index per cohort via Cox proportional hazards deep neural network
 
-**Q: GPU memory insufficient?**
-- Reduce `--batch_size` (e.g., 8 or 16)
-- Reduce `--max_cells` (e.g., 1000 or 1500)
-- Use fewer GPUs
+### Gene Mutation Status Prediction
 
-**Q: How to use custom segmentation masks?**
-- Place images in `data/image/` and masks in `data/segment/`
-- Masks must be grayscale PNG with nuclei pixels > 0, background = 0
-- Filename must match the image filename
+```bash
+python downstream_mutation_improved.py \
+    --features_dir ./features \
+    --mutation_dir ./clinical/mutation \
+    --output_dir ./results_mutation
+```
 
-**Q: Segmentation mask format issues?**
-- The script automatically binarizes masks (threshold = 1)
-- Adjust `cv2.threshold` in `extract_features.py` if needed
+**Input:** `clinical/mutation/{cohort}.all` (gene × patient binary matrix)
+**Output:** AUC per gene via multiple strategies (XGBoost, MLP, Top-K pooling)
 
----
+### Drug Sensitivity Prediction
+
+```bash
+python downstream_drug_improved.py \
+    --features_dir ./features \
+    --drug_csv ./clinical/drug.csv \
+    --output_dir ./results_drug
+```
+
+**Input:** `clinical/drug.csv` (patient, drug1_IC50, drug2_IC50, ...)
+**Output:** Spearman correlation per drug via SVR/XGBoost/MLP
+
+### TNM Staging Prediction
+
+```bash
+python downstream_tnm.py \
+    --features_dir ./features \
+    --clinical_dir ./clinical/clinical \
+    --output_dir ./results_tnm
+```
+
+**Input:** `clinical/{cohort}_tnm.csv` with `t_stage`, `n_stage`, `m_stage` columns
+**Output:** Accuracy and AUC per staging task
+
+### Gleason Grading (PRAD)
+
+```bash
+python downstream_gleason.py \
+    --features_dir ./features \
+    --clinical_dir ./clinical/clinical \
+    --output_dir ./results_gleason
+```
+
+**Input:** `clinical/{cohort}_gdc_clinical.csv` with `gleason_score` column
+**Output:** Accuracy, AUC, and F1 for ISUP Grade Groups 1–5
+
+### One-Click: Run All Tasks
+
+```bash
+bash scripts/4_run_downstream.sh \
+    --features_dir ./features \
+    --clinical_dir ./clinical \
+    --task all
+```
+
+## Advanced: WSI-Level Analysis
+
+For whole-slide image (SVS format) analysis:
+
+### WSI Tumor Classification
+
+```bash
+python wsi_mil_classify.py
+```
+
+### Survival Risk Heatmap on WSI
+
+```bash
+python wsi_survival_heatmap.py \
+    --svs_path ./WSIs/patient001.svs \
+    --cohort BRCA \
+    --cps_model ./checkpoints_supcon/best_model.pth
+```
+
+### Grad-CAM Visualization
+
+```bash
+python gradcam_wsi_v2.py
+```
+
+> **Note:** WSI analysis requires `openslide-python` (`pip install openslide-python`).
+
+## Pre-trained Models
+
+Download pre-trained model weights before running inference or fine-tuning:
+
+| Model | File | Size | Description |
+|-------|------|------|-------------|
+| CPSformer (SupCon) | `checkpoints_supcon/best_model.pth` | 118 MB | Full model with SupCon pre-training on 24 TCGA cohorts |
+| Cell Encoder | `checkpoints_cell/model.pth` | 43 MB | Distilled ResNet-18 cell feature extractor (from UNI2) |
+| Nucleus Segmentation | `checkpoints/nucseg_deeplabv3/models/model.pth` | 152 MB | DeepLabV3 (ResNet50) for automatic nucleus segmentation |
+
+📥 **[Download Pre-trained Models](#)** (coming soon)
+
+## Project Structure
+
+```
+CPSformer/
+├── README.md
+├── requirements.txt
+├── LICENSE
+├── scripts/                    # One-click scripts
+│   ├── setup_env.sh
+│   ├── 1_prepare_data.sh
+│   ├── 2_train_finetune.sh
+│   ├── 3_extract_features.sh
+│   └── 4_run_downstream.sh
+├── models.py                   # MILCellModelmerge (GAT + Transformer)
+├── train_single_cohort.py     # Main training script
+├── prepare_data.py            # Data preparation pipeline
+├── extract_cps_features.py    # Feature extraction
+├── utils/
+│   ├── DataSets.py             # DatasetLoaderV2
+│   └── utils.py                # Loss functions (NTXentLoss, SupConLoss, etc.)
+├── nucseg_modules/
+│   ├── nucseg_pipeline.py     # Segmentation orchestrator
+│   ├── nucseg_deeplabv3.py    # DeepLabV3 segmentation (PyTorch)
+│   └── nucseg_unet.py         # UNet segmentation (optional)
+├── downstream_*.py              # Downstream task scripts
+├── wsi_*.py                    # WSI-level analysis
+├── gradcam_*.py                # Grad-CAM visualization
+└── checkpoints/               # Pre-trained model weights
+```
+
+## Performance Benchmark
+
+| Task | Metric | CPSformer | ResNet50 | CONCH | UNI2 |
+|------|--------|-----------|----------|-------|------|
+| WSI Classification | Accuracy | — | — | — | — |
+| Survival (C-index) | Mean ± Std | — | — | — | — |
+| Mutation (AUC) | Mean | — | — | — | — |
+| Drug (SCC) | Mean | — | — | — | — |
+
+> Results from our paper. Detailed benchmarks will be added upon publication.
 
 ## Citation
 
 If you use CPSformer in your research, please cite:
 
 ```bibtex
-@article{CPSformer2026,
-  title={CPSformer: Cell Position & Structure Transformer for Computational Pathology},
-  author={...},
-  journal={...},
-  year={2026}
+@article{cpsformer2024,
+  title={CPSformer: Cell Patch Set Transformer for Pathology Image Analysis},
+  author={},
+  journal={},
+  year={2024}
 }
 ```
 
----
-
 ## License
 
-MIT License
-
----
+This project is released under the BSD 3-Clause License. See [LICENSE](LICENSE) for details.
 
 ## Acknowledgments
 
-- TCGA dataset for training data
-- UNI2 foundation model for distilled cell encoder weights
-- 
-## 📧 Contact
-For questions, contact: kongyan@sjtu.edu.cn
-
-
+- Foundation model features: [UNI2](https://github.com/mahmoodlab/UNI), [CONCH](https://github.com/MahmoodLab/CONCH), [TITAN](https://github.com/dccxi/TITAN)
+- Nucleus segmentation models trained on IHC histopathology datasets
+- TCGA project for providing publicly available cancer genomics and pathology data
