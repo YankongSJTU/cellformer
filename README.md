@@ -338,9 +338,9 @@ CPSformer features support multiple downstream clinical tasks:
 ### Survival Prognosis Prediction
 
 ```bash
-python downstream_survival.py \
+python DownstreamTask/downstream_survival.py \
     --features_dir ./features \
-    --survival_dir ./clinical/survival \
+    --survival_dir ./data/clinical/survival \
     --output_dir ./results_survival
 ```
 
@@ -350,9 +350,9 @@ python downstream_survival.py \
 ### Gene Mutation Status Prediction
 
 ```bash
-python downstream_mutation_improved.py \
+python DownstreamTask/downstream_mutation_improved.py \
     --features_dir ./features \
-    --mutation_dir ./clinical/mutation \
+    --mutation_dir ./data/clinical/mutation \
     --output_dir ./results_mutation
 ```
 
@@ -362,9 +362,9 @@ python downstream_mutation_improved.py \
 ### Drug Sensitivity Prediction
 
 ```bash
-python downstream_drug_improved.py \
+python DownstreamTask/downstream_drug_improved.py \
     --features_dir ./features \
-    --drug_csv ./clinical/drug.csv \
+    --drug_csv ./data/clinical/drug.csv \
     --output_dir ./results_drug
 ```
 
@@ -374,9 +374,9 @@ python downstream_drug_improved.py \
 ### TNM Staging Prediction
 
 ```bash
-python downstream_tnm.py \
+python DownstreamTask/downstream_tnm.py \
     --features_dir ./features \
-    --clinical_dir ./clinical/clinical \
+    --clinical_dir ./data/clinical/clinical \
     --output_dir ./results_tnm
 ```
 
@@ -386,9 +386,9 @@ python downstream_tnm.py \
 ### Gleason Grading (PRAD)
 
 ```bash
-python downstream_gleason.py \
+python DownstreamTask/downstream_gleason.py \
     --features_dir ./features \
-    --clinical_dir ./clinical/clinical \
+    --clinical_dir ./data/clinical/clinical \
     --output_dir ./results_gleason
 ```
 
@@ -400,7 +400,7 @@ python downstream_gleason.py \
 ```bash
 bash scripts/4_run_downstream.sh \
     --features_dir ./features \
-    --clinical_dir ./clinical \
+    --clinical_dir ./data/clinical \
     --task all
 ```
 
@@ -417,10 +417,10 @@ python wsi_mil_classify.py
 ### Survival Risk Heatmap on WSI
 
 ```bash
-python wsi_survival_heatmap.py \
+python DownstreamTask/wsi_survival_heatmap.py \
     --svs_path ./WSIs/patient001.svs \
     --cohort BRCA \
-    --cps_model ./checkpoints_supcon/best_model.pth
+    --cps_model ./checkpoints/best_model.pth
 ```
 
 ### Grad-CAM Visualization
@@ -437,8 +437,8 @@ Download pre-trained model weights before running inference or fine-tuning:
 
 | Model | File | Size | Description |
 |-------|------|------|-------------|
-| CPSformer (SupCon) | `checkpoints_supcon/best_model.pth` | 118 MB | Full model with SupCon pre-training on 24 TCGA cohorts |
-| Cell Encoder | `checkpoints_cell/model.pth` | 43 MB | Distilled ResNet-18 cell feature extractor (from UNI2) |
+| CPSformer (SupCon) | `checkpoints/best_model.pth` | 118 MB | Full model with SupCon pre-training on 24 TCGA cohorts |
+| Cell Encoder | `checkpoints/checkpoints_cellfeature/model.pth` | 43 MB | Distilled ResNet-18 cell feature extractor (from UNI2) |
 | Nucleus Segmentation | `checkpoints/nucseg_deeplabv3/models/model.pth` | 152 MB | DeepLabV3 (ResNet50) for automatic nucleus segmentation |
 
 📥 **[Download Pre-trained Models](#)** (coming soon)
@@ -456,20 +456,19 @@ CPSformer/
 │   ├── 2_train_finetune.sh
 │   ├── 3_extract_features.sh
 │   └── 4_run_downstream.sh
-├── models.py                   # MILCellModelmerge (GAT + Transformer)
 ├── train_single_cohort.py     # Main training script
 ├── prepare_data.py            # Data preparation pipeline
 ├── extract_cps_features.py    # Feature extraction
 ├── utils/
-│   ├── DataSets.py             # DatasetLoaderV2
+│   ├── DataSets.py             # DatasetLoader
+│   ├── models.py                # MILCellModelmerge (GAT + Transformer)
 │   └── utils.py                # Loss functions (NTXentLoss, SupConLoss, etc.)
 ├── nucseg_modules/
 │   ├── nucseg_pipeline.py     # Segmentation orchestrator
 │   ├── nucseg_deeplabv3.py    # DeepLabV3 segmentation (PyTorch)
 │   └── nucseg_unet.py         # UNet segmentation (optional)
-├── downstream_*.py              # Downstream task scripts
-├── wsi_*.py                    # WSI-level analysis
-├── gradcam_*.py                # Grad-CAM visualization
+├── DownstreamTask/
+│   └── downstream_*.py              # Downstream task scripts
 └── checkpoints/               # Pre-trained model weights
 ```
 
