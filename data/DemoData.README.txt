@@ -43,3 +43,5 @@ Notes
     Segmentation result folders, if present, should contain only mask files corresponding to the images in the parent folder.
 
     All images should be in standard, widely supported formats (PNG, TIF, JPG, etc.).
+
+We provide one demo pickle file, which can be downloaded from the following link: https://drive.google.com/file/d/1GTja9oHvoBb8QD67LfmEH-gBHXNS-CgK/view?usp=sharing
