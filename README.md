@@ -111,9 +111,6 @@ We provide a small demo dataset to help you get started quickly:
 | BRCA   | 78       | Breast      | Invasive breast carcinoma |
 | LUAD   | 78       | Lung        | Lung adenocarcinoma |
 
-### Download
-
-📥 **[Download Demo Data](#)** (coming soon)
 
 ### Expected Directory Structure
 
