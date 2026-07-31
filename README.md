@@ -272,8 +272,8 @@ bash scripts/2_train_finetune.sh \
 ```bash
 python train_single_cohort.py \
     --pkl_dir ./prepared_data \
-    --pretrained_model_path ./checkpoints_supcon/best_model.pth \
-    --distilled_cell_path ./checkpoints_cell/model.pth \
+    --pretrained_model_path ./checkpoints/best_model.pth \
+    --distilled_cell_path ./checkpoints/checkpoints_cellfeature/model.pth \
     --checkpoints_dir ./checkpoints_finetuned \
     --batch_size 64 \
     --epoch_count 100 \
@@ -321,7 +321,7 @@ Extract 1024-dimensional CPS features from your ROI images:
 ```bash
 bash scripts/3_extract_features.sh \
     --input_dir ./my_data \
-    --model_path ./checkpoints_supcon/best_model.pth \
+    --model_path ./checkpoints/best_model.pth \
     --gpu 0
 ```
 
