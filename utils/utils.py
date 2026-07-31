@@ -621,6 +621,15 @@ class NTXentLoss(nn.Module):
             return loss / (2 * N)
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Supervised Contrastive Loss (SupCon) — 判别损失
+#   Khosla et al., "Supervised Contrastive Learning", NeurIPS 2020
+#
+# 与 NTXentLoss 的区别: NTXent 仅把同一图像的两个增广视图视为正样本对
+# (无监督); SupCon 则利用类别标签, 把 batch 内所有同类样本(含其它视图)都
+# 当作正样本, 异类样本当作负样本, 显式监督嵌入空间按类别聚类, 从而学得
+# 更具判别性的特征. 适合在 CPSformer 已有的对比/分类损失之上叠加.
+# ─────────────────────────────────────────────────────────────────────────────
 class SupConLoss(nn.Module):
     """Supervised Contrastive Loss (判别损失).
 
