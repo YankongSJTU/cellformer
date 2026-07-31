@@ -58,7 +58,7 @@
 ### Setup
 
 ```bash
-git clone https://github.com/YankongSJTU/cellformer.git
+git clone https://github.com/YankongSJTU/CPSformer.git
 cd CPSformer
 
 # Option 1: One-click environment setup
