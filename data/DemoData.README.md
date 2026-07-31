@@ -1,44 +1,45 @@
-## Data Folder Structure
+Data Folder Structure
 
 This repository contains demo image data for testing and demonstration purposes.
 
-### Folder Naming Convention
-- Each top-level folder should be named after the **recommended tumor or disease type** (e.g., `Breast_Carcinoma`, `Lung_Adenocarcinoma`, `Melanoma`).
+Folder Naming Convention
+-Each top-level folder should be named after the recommended tumor or disease type (e.g., Breast_Carcinoma, Lung_Adenocarcinoma, Melanoma).
 
-### Inside Each Folder
-- **Image files** (`.png`, `.tif`, `.jpg`, or other common image formats) should be placed **directly** inside the folder.
-- **No nested subfolders** for images — keep the structure flat.
+Inside Each Folder
 
-### Optional: Segmentation Results
-- You may optionally include a subfolder named `segmentation_results` to store cell nucleus segmentation masks or other segmentation outputs.
-- This subfolder is **not required** — if you have no segmentation results, you can simply omit it.
+    Image files (.png, .tif, .jpg, or other common image formats) should be placed directly inside the folder.
 
-### Pre-trained Model File
-- A pre-trained demo PKL file is provided for direct model training.
-- **Download link**: [Google Drive Link]([https://drive.google.com/your-link-here](https://drive.google.com/file/d/1GTja9oHvoBb8QD67LfmEH-gBHXNS-CgK/view?usp=sharing))
-- After downloading, place the PKL file **directly under the `data/` directory**.
+    No nested subfolders for images — keep the structure flat.
 
+Optional: Segmentation Results
 
-### Example Structure
+    You may optionally include a subfolder named segmentation_results to store cell nucleus segmentation masks or other segmentation outputs.
+
+    This subfolder is not required — if you have no segmentation results, you can simply omit it.
+
+Example Structure
+text
+
 data/
 ├── Breast_Carcinoma/
-│ ├── sample1.png
-│ ├── sample2.tif
-│ └── segmentation/ (optional)
-│ ├── sample1.png
-│ └── sample2.png
-│ └── ...
+│   ├── sample1.png
+│   ├── sample2.tif
+│   └── segmentation_results/   (optional)
+│       ├── sample1_mask.png
+│       └── sample2_mask.png
 ├── Lung_Adenocarcinoma/
-│ ├── case001.jpg
-│ └── case002.png
+│   ├── case001.jpg
+│   └── case002.png
 └── Melanoma/
-├── img_01.png
-├── img_02.tif
-└── segmentation/ (optional)
-│ ├── img_01.png
-  └── ...
+    ├── img_01.png
+    ├── img_02.tif
+    └── segmentation_results/   (optional)
+        └── img_01_mask.png
 
-### Notes
-- Only image files are expected at the top level of each disease/tumor folder.
-- Segmentation result folders, if present, should contain only mask files corresponding to the images in the parent folder.
-- All images should be in standard, widely supported formats (PNG, TIF, JPG, etc.).
+Notes
+
+    Only image files are expected at the top level of each disease/tumor folder.
+
+    Segmentation result folders, if present, should contain only mask files corresponding to the images in the parent folder.
+
+    All images should be in standard, widely supported formats (PNG, TIF, JPG, etc.).
